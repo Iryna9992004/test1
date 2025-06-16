@@ -26,4 +26,9 @@ export class JwtService {
     const decodedPayload = jwt.verify(token, config.jwt.accessSecret);
     return decodedPayload;
   }
+
+   verifyRefreshToken(token: string) {
+    const decodedPayload = jwt.verify(token, config.jwt.refreshSecret) as JwtPayload;
+    return decodedPayload;
+  }
 }

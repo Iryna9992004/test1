@@ -34,12 +34,12 @@ export class AuthController {
       const tokens = this.jwtService.generateTokens({ email });
 
       res.cookie('refreshToken', tokens.refreshToken, {
-        maxAge: 2000,
+        maxAge: 60 * 60 * 1000,
         sameSite: false,
         httpOnly: true,
       });
       res.cookie('accessToken', tokens.accessToken, {
-        maxAge: 1000,
+        maxAge: 15 * 60 * 1000,
         sameSite: false,
         httpOnly: true,
       });
@@ -73,12 +73,12 @@ export class AuthController {
       const tokens = this.jwtService.generateTokens({ email });
 
       res.cookie('refreshToken', tokens.refreshToken, {
-        maxAge: 2000,
+        maxAge: 60 * 60 * 1000,
         sameSite: false,
         httpOnly: true,
       });
       res.cookie('accessToken', tokens.accessToken, {
-        maxAge: 1000,
+        maxAge: 15 * 60 * 1000,
         sameSite: false,
         httpOnly: true,
       });
@@ -90,4 +90,37 @@ export class AuthController {
       console.log(e);
     }
   }
+
+  async refresh(req: Request, res: Response): Promise<void> {
+  try {
+    const refreshToken = req.cookies.refreshToken;
+
+    if (!refreshToken) {
+      res.status(401).json({ error: 'Session is inactive' });
+    }
+
+    const decodedToken = this.jwtService.verifyRefreshToken(refreshToken);
+    const tokens = this.jwtService.generateTokens({ email: decodedToken.email });
+
+    // Set new cookies
+    res.cookie('refreshToken', tokens.refreshToken, {
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+      sameSite: 'lax',
+      httpOnly: true,
+    });
+    res.cookie('accessToken', tokens.accessToken, {
+      maxAge: 15 * 60 * 1000, // 15 minutes
+      sameSite: 'lax',
+      httpOnly: true,
+    });
+
+    res.status(200).json({
+      accessToken: tokens.accessToken,
+      message: 'Tokens refreshed successfully'
+    });
+  } catch (e) {
+    console.log(e);
+    res.status(401).json({ error: 'Invalid refresh token' }); // IMPORTANT: Send response!
+  }
+}
 }
